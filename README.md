@@ -55,7 +55,7 @@ If you use a complete systemd init you might want to use a [PasswordAgent](https
     sudo update-initramfs -k `uname -r` -c 
 
 ## License
-CC-BY-NC-SA 2.0 de
+CC-BY-NC-SA 4.0 en
 
 Due to the License of the original source.
 May not be nothworthy, because the level of creativity is not high enough or the original authors provided a different license.
