@@ -52,10 +52,10 @@ FALSE=0
 # set DEBUG=$TRUE to display debug messages, DEBUG=$FALSE to be quiet
 DEBUG=$TRUE
 
-PLYMOUTH=$FALSE
+PLYMOUTH="$(command -v plymouth)"
 # test for plymouth and if plymouth is running
-if [ -x /bin/plymouth ] && plymouth --ping; then
-        PLYMOUTH=$TRUE
+if ! ([ ! -z "$PLYMOUTH" ] && [ -x "$PLYMOUTH" ] && "$PLYMOUTH" --ping); then
+        PLYMOUTH=""
 fi
 
 # is stty available? default false
@@ -82,11 +82,12 @@ msg ()
 	if [ $# -gt 0 ]; then
 		# handle multi-line messages
 		echo $2 | while read LINE; do
-			if [ $PLYMOUTH -eq $TRUE ]; then
-				/bin/plymouth message --text="$1 $LINE"		
-			#else
+			if [ ! -z "$PLYMOUTH" ]; then
+				"$PLYMOUTH" message --text="$1 $LINE"
+			else
 				# use stderr for all messages
-				echo $3 "$2" >&2
+				#echo $3 "$2" >&2
+				echo "$1 $LINE" >&2
 			fi
 		done
 	fi
@@ -104,8 +105,8 @@ dbg ()
 readpass ()
 {
 	if [ $# -gt 0 ]; then
-		if [ $PLYMOUTH -eq $TRUE ]; then
-			PASS="$(/bin/plymouth ask-for-password --prompt="$1")"
+		if [ ! -z "$PLYMOUTH" ]; then
+			PASS="$("$PLYMOUTH" ask-for-password --prompt="$1")"
 		else
 			[ $STTY -ne $TRUE ] && msg "WARNING stty not found, password will be visible"
 			echo -n "$1" >&2
