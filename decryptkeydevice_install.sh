@@ -87,7 +87,12 @@ if [ "$DECRYPTKEYDEVICE_SKIPBLOCKS" -lt "$SEC_START" ]; then
     sudo sed -i "/DECRYPTKEYDEVICE_SKIPBLOCKS/s/=.*\$/='$SEC_START'/" "$conf"
 fi
 . "$conf"
-echo "DECRYPTKEYDEVICE_READBLOCKS: $DECRYPTKEYDEVICE_READBLOCKS"
+
+for key in _DISKID _BLOCKSIZE _SKIPBLOCKS _READBLOCKS;
+do
+        key="DECRYPTKEYDEVICE$key"
+        eval "echo \"$key: \$$key\""
+done
 
 if [ "$((DECRYPTKEYDEVICE_SKIPBLOCKS+DECRYPTKEYDEVICE_READBLOCKS))" -ge "$SEC_END" ]; then
     echo "Not enough space for $DECRYPTKEYDEVICE_READBLOCKS blocks in free area from $DECRYPTKEYDEVICE_SKIPBLOCKS to $SEC_END after the partition table! Giving up."
