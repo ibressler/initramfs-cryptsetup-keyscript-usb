@@ -10,63 +10,20 @@ If you use a complete systemd init you might want to use a [PasswordAgent](https
 
 ## Usage
 
-1. Create a hidden "key" on your USB Memory device
-  - Read the start of your device partition
+In contrast to previous versions, an install script `decryptkeydevice_install.sh` was added which automates the manual procedure of setting up the *cryptdevice*. If it is not supplied to the install script its name is derived from `/etc/crypttab` and `cryptsetup status`.
 
 ```shell
-    sudo fdisk -l /dev/sdb
+    sh decryptkeydevice_install.sh /dev/disk/by-id/usb-Generic_Flash_Disk_* [cryptdevice]
 ```
 
-  - Fill the free space with random stuff. Set count to the value of of your first partion - 2
+The install script
 
-```shell
-    sudo dd if=/dev/urandom of=/dev/sdb bs=512 seek=1 count=60 
-```
+1. Adjusts the `/etc/crypttab` accordingly
+2. Creates a `decryptkeydevice.hook` in `/etc/initramfs-tools/hooks`
+3. Copies the key script and the config file to `/etc/decryptkeydevice/` where `update-initramfs` picks it up on each run for including it in the *initrd* image.
+4. Writes random data on the given USB storage device in the unused space between partition table and data partitions (which are aligned typically and thus leaving approx. 1.5 MB unoccupied).
+5. Adds a key based on this random data to the *cryptdevice*.
 
-2. Add the key to your LUKS Partition
-
-```shell
-    sudo dd if=/dev/sdb bs=512 skip=1 count=4 > tempKeyFile.bin
-    sudo cryptsetup luksAddKey /dev/sda5 tempKeyFile.bin
-    sudo shred -f -z tempKeyFile.bin 
-```
-
-3. Fill the `decryptkeydevice.conf` File with the details of the key you created in Step 1 and 2 and copy it to
-
-```shell
-    # /etc/decryptkeydevice/decryptkeydevice.conf
-    # ID(s) of the USB/MMC key(s) for decryption (separated by blanks)
-    # as listed in /dev/disk/by-id/
-    DECRYPTKEYDEVICE_DISKID="mmc-XXX_0x0AAABBBCCCDDD usb-XyzFlash_XYZDFGHIJK_XXYYZZ00AA-0:0"
-    # blocksize usually 512 is OK
-    DECRYPTKEYDEVICE_BLOCKSIZE="512"
-    # start of key information on keydevice DECRYPTKEYDEVICE_BLOCKSIZE * DECRYPTKEYDEVICE_SKIPBLOCKS
-    DECRYPTKEYDEVICE_SKIPBLOCKS="1"
-    # length of key information on keydevice DECRYPTKEYDEVICE_BLOCKSIZE * DECRYPTKEYDEVICE_READBLOCKS
-    DECRYPTKEYDEVICE_READBLOCKS="4"
-```
-
-4. Add path to the keyscript to `/etc/crypttab` and make it executeable
-
-```shell
-    # /etc/crypttab
-    # X is the device number and Y is he UUID of the encrypted volume
-    sdaX_crypt UUID=Y none luks,keyscript=/etc/decryptkeydevice/decryptkeydevice_keyscript.sh
-
-    # make the script executable
-    sudo chmod +x /etc/decryptkeydevice/decryptkeydevice_keyscript.sh 
-```
-
-5. Copy `decryptkeydevice.hook` to `/etc/initramfs-tools/hooks` and make it executable
-
-```shell
-    sudo chmod +x /etc/initramfs-tools/hooks/decryptkeydevice.hook
-```
-
-6. Finally Update your initramfs. If you see no warnings you should be able to reboot.
-```shell
-    sudo update-initramfs -k `uname -r` -c 
-```
 
 ## License
 CC-BY-NC-SA 4.0 en
