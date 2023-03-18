@@ -43,14 +43,14 @@
 # read decryptkeydevice Key configuration settings
 DECRYPTKEYDEVICE_DISKID=""
 if [ -f /etc/decryptkeydevice/decryptkeydevice.conf ] ; then
-		.  /etc/decryptkeydevice/decryptkeydevice.conf
+	.  /etc/decryptkeydevice/decryptkeydevice.conf
 fi
 
 TRUE=1
 FALSE=0
 
 # set DEBUG=$TRUE to display debug messages, DEBUG=$FALSE to be quiet
-DEBUG=$FALSE
+DEBUG=$TRUE
 
 PLYMOUTH=$FALSE
 # test for plymouth and if plymouth is running
