@@ -2,6 +2,7 @@
 
 # get the script directory before creating any files
 scriptdir="$(dirname "$(readlink -f "$0")")"
+keyscript="$(ls "$scriptdir"/*keyscript.sh)"
 conf="$(ls "$scriptdir"/*.conf)"
 
 if [ ! -f "$conf" ]; then
@@ -41,38 +42,18 @@ echo "Using mapped dev '$mappeddev' and cryptdev '$cryptdev'."
 
 # adjust crypttab accordingly
 targetdir="/etc/decryptkeydevice"
-keyscript="$targetdir/$(basename "$(ls "$scriptdir"/*keyscript.sh)")"
-#cryptdev_escaped="$(echo "$cryptdev" | awk '{gsub("/","\/");print}')"
-#echo "cryptdev_escaped $cryptdev_escaped"
+sudo mkdir -p "$targetdir"
+sudo cp "$keyscript" "$conf" "$targetdir"/
+conf="$targetdir/$(basename $conf)"
+keyscript="$targetdir/$(basename "$keyscript")"
+sudo chmod 755 "$keyscript"
 sudo sed -i -e "s#^\($mappeddev\)\s\([^ ]\+\).*\$#\1 \2 none luks,keyscript=$keyscript#" "$crypttab"
 echo "Updated $crypttab:"
 cat "$crypttab"
 
-# arrange the script being picked up when initramfs is built
-hookfn="/etc/initramfs-tools/hooks/decryptkeydevice.hook"
-keyscript="$(ls "$scriptdir"/*keyscript.sh)"
-sudo mkdir -p "$targetdir"
-sudo cp "$keyscript" "$conf" "$targetdir"/
-sudo chmod 755 "$targetdir/$(basename $keyscript)"
-conf="$targetdir/$(basename $conf)"
-hooktmp="$(mktemp)"
-cat > "$hooktmp" <<EOF
-#!/bin/sh
-# initramfs hook to copy the keyscript and its config into the ramfs
-
-mkdir -p \$DESTDIR$targetdir
-cp -p '$targetdir/$(basename $keyscript)' '$conf' \$DESTDIR$targetdir/
-EOF
-
-sudo mv "$hooktmp" "$hookfn"
-sudo chmod +x "$hookfn"
-echo "Created initramfs hook '$hookfn':"
-cat "$hookfn"
-
-sudo update-initramfs -k $(uname -r) -u
-
 # determine available key space on provided disk,
 # read partition table boundaries and where the partitions start
+# update the configuration
 boundaries="$(sudo gdisk -l "$keydev" | awk '
     /First usable/ { match($0,"[0-9]+"); start=substr($0,RSTART,RLENGTH) }
     /^ +1/ { end=$2 -1 }
@@ -93,6 +74,23 @@ do
         key="DECRYPTKEYDEVICE$key"
         eval "echo \"$key: \$$key\""
 done
+
+# arrange the script being picked up when initramfs is built
+hooktmp="$(mktemp)"
+cat > "$hooktmp" <<EOF
+#!/bin/sh
+# initramfs hook to copy the keyscript and its config into the ramfs
+
+mkdir -p \$DESTDIR$targetdir
+cp -p '$keyscript' '$conf' \$DESTDIR$targetdir/
+EOF
+
+hookfn="/etc/initramfs-tools/hooks/decryptkeydevice.hook"
+sudo mv "$hooktmp" "$hookfn"
+sudo chmod 755 "$hookfn"
+echo "Created initramfs hook '$hookfn'."
+
+sudo update-initramfs -k $(uname -r) -u
 
 if [ "$((DECRYPTKEYDEVICE_SKIPBLOCKS+DECRYPTKEYDEVICE_READBLOCKS))" -ge "$SEC_END" ]; then
     echo "Not enough space for $DECRYPTKEYDEVICE_READBLOCKS blocks in free area from $DECRYPTKEYDEVICE_SKIPBLOCKS to $SEC_END after the partition table! Giving up."
