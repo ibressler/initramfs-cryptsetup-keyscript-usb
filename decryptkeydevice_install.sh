@@ -39,7 +39,7 @@ targetdir="/etc/decryptkeydevice"
 keyscript="$targetdir/$(basename "$(ls "$scriptdir"/*keyscript.sh)")"
 #cryptdev_escaped="$(echo "$cryptdev" | awk '{gsub("/","\/");print}')"
 #echo "cryptdev_escaped $cryptdev_escaped"
-sudo sed -i "/^$mappeddev/s#[^ ]\+\$#luks,keyscript=$keyscript#" "$crypttab"
+sudo sed -i -e "s#^\($mappeddev\)\s\([^ ]\+\).*\$#\1 \2 none luks,keyscript=$keyscript#" "$crypttab"
 echo "Updated $crypttab:"
 cat "$crypttab"
 
