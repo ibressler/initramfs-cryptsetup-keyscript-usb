@@ -1,4 +1,4 @@
-# decryptkeydevice
+# Initramfs cryptsetup keyscript for USB
 
 A custom script to unlock an encrypted [LUKS](https://en.wikipedia.org/wiki/Linux_Unified_Key_Setup) volume using a usb key or mmc storage device.
 If the key is missing or the decryption process fails, the script will prompt for the password to type manually.
