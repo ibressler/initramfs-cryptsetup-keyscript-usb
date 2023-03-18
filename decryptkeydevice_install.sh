@@ -46,13 +46,16 @@ cat "$crypttab"
 # arrange the script being picked up when initramfs is built
 hookfn="/etc/initramfs-tools/hooks/decryptkeydevice.hook"
 keyscript="$(ls "$scriptdir"/*keyscript.sh)"
+sudo mkdir -p "$targetdir"
+sudo cp "$keyscript" "$conf" "$targetdir"/
+sudo chmod 755 "$targetdir/$(basename $keyscript)"
 hooktmp="$(mktemp)"
 cat > "$hooktmp" <<EOF
 #!/bin/sh
 # initramfs hook to copy the keyscript and its config into the ramfs
 
 mkdir -p \$DESTDIR$targetdir
-cp -p '$keyscript' '$conf' \$DESTDIR$targetdir/
+cp -p '$targetdir/$(basename $keyscript)' '$targetdir/$(basename $conf)' \$DESTDIR$targetdir/
 EOF
 
 sudo mv "$hooktmp" "$hookfn"
@@ -60,7 +63,7 @@ sudo chmod +x "$hookfn"
 echo "Created initramfs hook '$hookfn':"
 cat "$hookfn"
 
-exit
+sudo update-initramfs -k $(uname -r) -u
 
 # determine available key space on provided disk,
 # read partition table boundaries and where the partitions start
