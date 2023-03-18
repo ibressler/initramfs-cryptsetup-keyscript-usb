@@ -95,7 +95,7 @@ fi
 
 # fill the space with random data
 cmd_dd="dd if=/dev/urandom of='$keydev' bs='$SEC_BYTES' seek='$SEC_START' count='$((SEC_END-SEC_START))'"
-read -p "Write random data to from sector $SEC_START to $SEC_END on $keydev? (Ctrl-C to abort)" _
+read -p "Write random data from sector $SEC_START to $SEC_END on $keydev? (Ctrl-C to abort)" _
 echo $cmd_dd
 eval "sudo $cmd_dd"
 
