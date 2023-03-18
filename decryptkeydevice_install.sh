@@ -65,6 +65,11 @@ cat "$hookfn"
 
 sudo update-initramfs -k $(uname -r) -u
 
+if ! command -v gdisk; then
+    echo "Command not found: gdisk! Giving up."
+    exit 1
+fi
+
 # determine available key space on provided disk,
 # read partition table boundaries and where the partitions start
 boundaries="$(sudo gdisk -l "$keydev" | awk '
