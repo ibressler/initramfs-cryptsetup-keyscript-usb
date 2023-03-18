@@ -22,8 +22,7 @@ The install script
 2. Creates a `decryptkeydevice.hook` in `/etc/initramfs-tools/hooks`
 3. Copies the key script and the config file to `/etc/decryptkeydevice/` where `update-initramfs` picks it up on each run for including it in the *initrd* image.
 4. Writes random data on the given USB storage device in the unused space between partition table and data partitions (which are aligned typically and thus leaving approx. 1.5 MB unoccupied).
-5. Adds a key based on this random data to the *cryptdevice*.
-
+5. Adds a key based on this random data to the *cryptdevice* by calling `cryptsetup luksAddKey ...`.
 
 ## License
 CC-BY-NC-SA 4.0 en
