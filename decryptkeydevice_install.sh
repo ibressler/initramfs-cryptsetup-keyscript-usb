@@ -49,13 +49,14 @@ keyscript="$(ls "$scriptdir"/*keyscript.sh)"
 sudo mkdir -p "$targetdir"
 sudo cp "$keyscript" "$conf" "$targetdir"/
 sudo chmod 755 "$targetdir/$(basename $keyscript)"
+conf="$targetdir/$(basename $conf)"
 hooktmp="$(mktemp)"
 cat > "$hooktmp" <<EOF
 #!/bin/sh
 # initramfs hook to copy the keyscript and its config into the ramfs
 
 mkdir -p \$DESTDIR$targetdir
-cp -p '$targetdir/$(basename $keyscript)' '$targetdir/$(basename $conf)' \$DESTDIR$targetdir/
+cp -p '$targetdir/$(basename $keyscript)' '$conf' \$DESTDIR$targetdir/
 EOF
 
 sudo mv "$hooktmp" "$hookfn"
@@ -80,10 +81,10 @@ boundaries="$(sudo gdisk -l "$keydev" | awk '
 echo $boundaries
 eval $boundaries
 . "$conf"
-sed -i "/DECRYPTKEYDEVICE_DISKID/s#=.*\$#='$(basename $keydev)'#" "$conf"
-sed -i "/DECRYPTKEYDEVICE_BLOCKSIZE/s/=.*\$/='$SEC_BYTES'/" "$conf"
+sudo sed -i "/DECRYPTKEYDEVICE_DISKID/s#=.*\$#='$(basename $keydev)'#" "$conf"
+sudo sed -i "/DECRYPTKEYDEVICE_BLOCKSIZE/s/=.*\$/='$SEC_BYTES'/" "$conf"
 if [ "$DECRYPTKEYDEVICE_SKIPBLOCKS" -lt "$SEC_START" ]; then
-    sed -i "/DECRYPTKEYDEVICE_SKIPBLOCKS/s/=.*\$/='$SEC_START'/" "$conf"
+    sudo sed -i "/DECRYPTKEYDEVICE_SKIPBLOCKS/s/=.*\$/='$SEC_START'/" "$conf"
 fi
 . "$conf"
 echo "DECRYPTKEYDEVICE_READBLOCKS: $DECRYPTKEYDEVICE_READBLOCKS"
