@@ -16,6 +16,11 @@ if [ ! -b "$keydev" ]; then
     exit 1
 fi
 
+if ! command -v gdisk; then
+    echo "Command not found: gdisk! Giving up."
+    exit 1
+fi
+
 # find the device name of the crypted and mapped device
 crypttab="/etc/crypttab"
 mappeddev="$(basename "$2")"
@@ -65,11 +70,6 @@ echo "Created initramfs hook '$hookfn':"
 cat "$hookfn"
 
 sudo update-initramfs -k $(uname -r) -u
-
-if ! command -v gdisk; then
-    echo "Command not found: gdisk! Giving up."
-    exit 1
-fi
 
 # determine available key space on provided disk,
 # read partition table boundaries and where the partitions start
